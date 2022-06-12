@@ -1,0 +1,11 @@
+{
+  "namespace": "neanka",
+  "name": "servertools",
+  "description": "Some useful server tools for V Rising",
+  "version_number": "1.0.0",
+  "dependencies": [
+    "BepInEx-BepInExPack_V_Rising-1.0.0",
+	"molenzwiebel-Wetstone-1.1.0"
+  ],
+  "website_url": "https://github.com/Neanka"
+}

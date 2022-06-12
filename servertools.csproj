@@ -33,7 +33,7 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <PropertyGroup>
-      <PostBuildEvent>copy /y "C:\Users\neank\RiderProjects\vrising_test\servertools\bin\Release\servertools.dll" "E:\Games\SteamLibrary\steamapps\common\VRising\VRising_Server\BepInEx\plugins\neanka.servertools\"</PostBuildEvent>
+      <PostBuildEvent>C:\Users\neank\RiderProjects\vrising_test\servertools\bin\Release\run.bat</PostBuildEvent>
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="0Harmony">

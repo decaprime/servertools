@@ -17,15 +17,15 @@ namespace servertools
 
     public class Announcements : MonoBehaviour
     {
-        public static ManualLogSource logger;
-        public static Announcements instance;
-        private float currenttime;
+        private static ManualLogSource Logger;
+        public static Announcements Instance;
+        private float _currenttime;
         private void Start()
         {
-            logger = MainClass.logger;
-            logger.LogWarning("Announcements start");
-            instance = this;
-            currenttime = 0;
+            Logger = MainClass.Logger;
+            Logger.LogWarning("Announcements start");
+            Instance = this;
+            _currenttime = 0;
 
             StartCoroutine( "CoroutineTest");
 
@@ -33,39 +33,39 @@ namespace servertools
 
         private void Update()
         {
-            if (MainClass.announcesEnabled)
+            if (MainClass.AnnouncesEnabled)
             {
-                currenttime += Time.deltaTime;
-                if ( currenttime >= MainClass.timer)
+                _currenttime += Time.deltaTime;
+                if ( _currenttime >= MainClass.Timer)
                 {
-                    logger.LogWarning($"posting announcement: {MainClass.announce_entries[MainClass.last_entry]}");
-                    PostInGame(WorldUtility.FindWorld("Server").EntityManager, MainClass.announce_entries[MainClass.last_entry])
+                    Logger.LogWarning($"posting announcement: {MainClass.AnnounceEntries[MainClass.LastEntry]}");
+                    PostInGame(WorldUtility.FindWorld("Server").EntityManager, MainClass.AnnounceEntries[MainClass.LastEntry])
                         .GetAwaiter();
-                    if (MainClass.rnd) MainClass.last_entry = MainClass.random.Next(0, MainClass.entries_count); else { 
-                        MainClass.last_entry++; 
-                        if (MainClass.last_entry == MainClass.entries_count) MainClass.last_entry = 0;
+                    if (MainClass.Rnd) MainClass.LastEntry = MainClass.Random.Next(0, MainClass.EntriesCount); else { 
+                        MainClass.LastEntry++; 
+                        if (MainClass.LastEntry == MainClass.EntriesCount) MainClass.LastEntry = 0;
                     }
 
-                    currenttime = 0;
+                    _currenttime = 0;
                 }            
             }
         }
 
         public void Restart()
         {
-            currenttime = MainClass.timer;
-            MainClass.logger.LogWarning("Announcements restart");
+            _currenttime = MainClass.Timer;
+            MainClass.Logger.LogWarning("Announcements restart");
         }
         public void CoroutineTest()
         {
-            MainClass.logger.LogWarning( "Start bot corutine" );
-            if (MainClass.configEnableDiscordBot.Value)
+            MainClass.Logger.LogWarning( "Start bot corutine" );
+            if (MainClass.ConfigEnableDiscordBot.Value)
             {
                 RunBotAsync().GetAwaiter().GetResult();
             }
         }
 
-        public static DiscordSocketClient _client;
+        public static DiscordSocketClient Client;
 
         private async UniTask RunBotAsync()
         {
@@ -73,18 +73,18 @@ namespace servertools
             {
                 UseInteractionSnowflakeDate = false
             };
-            _client = new DiscordSocketClient(config);
-            string token = MainClass.configToken.Value;
-            _client.Log += _client_Log;
-            _client.MessageReceived += HandleCommandAsync;
-            _client.Ready += Client_Ready;
-            _client.SlashCommandExecuted += SlashCommandHandler;
-            await _client.LoginAsync(TokenType.Bot, token);
-            await _client.StartAsync();
+            Client = new DiscordSocketClient(config);
+            string token = MainClass.ConfigToken.Value;
+            Client.Log += _client_Log;
+            Client.MessageReceived += HandleCommandAsync;
+            Client.Ready += Client_Ready;
+            Client.SlashCommandExecuted += SlashCommandHandler;
+            await Client.LoginAsync(TokenType.Bot, token);
+            await Client.StartAsync();
         }
         private Task _client_Log(LogMessage arg)
         {
-            logger.LogWarning(arg.Message);
+            Logger.LogWarning(arg.Message);
             return Task.CompletedTask;
         }
         private Task HandleCommandAsync(SocketMessage arg)
@@ -92,17 +92,17 @@ namespace servertools
             try
             {
                 var message = arg as SocketUserMessage;
-                if (message.Author.IsBot || message.Channel.Id != MainClass.configChannelID.Value)
+                if (message.Author.IsBot || message.Channel.Id != MainClass.ConfigChannelID.Value)
                     return Task.CompletedTask;
-                logger.LogWarning($"message received from discord: {message.Author.Username}: {message.Content}");
+                Logger.LogWarning($"message received from discord: {message.Author.Username}: {message.Content}");
                 var entityManager = WorldUtility.FindWorld("Server").EntityManager;
                 //ServerChatUtils.SendSystemMessageToAllClients(entityManager, $"[DC] {message.Author.Username}: {message.Content}");
                 PostInGame(entityManager,
-                    $"{MainClass.ingameMessagePrefix} {message.Author.Username}: {message.Content}").GetAwaiter();
+                    $"{MainClass.IngameMessagePrefix} {message.Author.Username}: {message.Content}").GetAwaiter();
             }
             catch (Exception e)
             {
-                logger.LogError(e);
+                Logger.LogError(e);
             }
             return Task.CompletedTask;
         }
@@ -140,11 +140,11 @@ namespace servertools
         {
             try
             {
-                if (MainClass.configEnableDiscordBot.Value) await (_client.GetChannel(MainClass.configChannelID.Value) as ITextChannel).SendMessageAsync(str);
+                if (MainClass.ConfigEnableDiscordBot.Value) await (Client.GetChannel(MainClass.ConfigChannelID.Value) as ITextChannel).SendMessageAsync(str);
             }
             catch (Exception e)
             {
-                logger.LogError(e);
+                Logger.LogError(e);
             }
         }
 
@@ -156,7 +156,7 @@ namespace servertools
             }
             catch (Exception e)
             {
-                logger.LogError(e);
+                Logger.LogError(e);
             }
             await UniTask.Yield();
         }
@@ -168,12 +168,12 @@ namespace servertools
             globalCommand.WithDescription("Show server status");
             try
             {
-                await Announcements._client.CreateGlobalApplicationCommandAsync(globalCommand.Build());
+                await Announcements.Client.CreateGlobalApplicationCommandAsync(globalCommand.Build());
             }
             catch(HttpException exception)
             {
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-                logger.LogError(json);
+                Logger.LogError(json);
             }
         }
         private async Task SlashCommandHandler(SocketSlashCommand command)
@@ -208,7 +208,7 @@ namespace servertools
             }
             catch (Exception e)
             {
-                logger.LogError(e);
+                Logger.LogError(e);
                 throw;
             }
         }

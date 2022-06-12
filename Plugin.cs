@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
@@ -23,68 +22,68 @@ namespace servertools
         private const string PluginGuid = "neanka.servertools";
         private const string PluginName = "servertools";
         private const string PluginVersion = "3.0.0.0";
-        public static ManualLogSource logger;
-        private static Harmony harmony;
+        public static ManualLogSource Logger;
+        private static Harmony _harmony;
 
-        public static ConfigFile conf;
+        public static ConfigFile Conf;
 
-        public static ConfigEntry<bool> configEnableDiscordBot;
+        public static ConfigEntry<bool> ConfigEnableDiscordBot;
         //private static ConfigEntry<ulong> configGuildID;
-        public static ConfigEntry<ulong> configChannelID;
-        public static ConfigEntry<string> configToken;
-        private static ConfigEntry<string> configMOTD;
-        private static ConfigEntry<bool> configMOTDEnabled;
-        private static ConfigEntry<bool> configShowUserConnectedInDC;
-        private static ConfigEntry<bool> configShowUserConnectedInGameChat;
-        private static ConfigEntry<bool> configShowUserDisConnectedInDC;
-        private static ConfigEntry<bool> configShowUserDisConnectedInGameChat;
-        public static ConfigEntry<float> configAnnounceTimer;
-        private static ConfigEntry<bool> configAnnounceEnabled;
-        public static ConfigEntry<bool> configAnnounceRandomOrder;
-        public static ConfigEntry<string> configIngameMessagePrefix;
-        public static ConfigEntry<string> configCommandToReloadMessages;
+        public static ConfigEntry<ulong> ConfigChannelID;
+        public static ConfigEntry<string> ConfigToken;
+        private static ConfigEntry<string> _configMotd;
+        private static ConfigEntry<bool> _configMotdEnabled;
+        private static ConfigEntry<bool> _configShowUserConnectedInDc;
+        private static ConfigEntry<bool> _configShowUserConnectedInGameChat;
+        private static ConfigEntry<bool> _configShowUserDisConnectedInDc;
+        private static ConfigEntry<bool> _configShowUserDisConnectedInGameChat;
+        public static ConfigEntry<float> ConfigAnnounceTimer;
+        private static ConfigEntry<bool> _configAnnounceEnabled;
+        public static ConfigEntry<bool> ConfigAnnounceRandomOrder;
+        public static ConfigEntry<string> ConfigIngameMessagePrefix;
+        public static ConfigEntry<string> ConfigCommandToReloadMessages;
         
         
-        public static List<string> announce_entries;
-        private static List<ConfigEntry<string>> configAnnounceMessages;
+        public static List<string> AnnounceEntries;
+        private static List<ConfigEntry<string>> _configAnnounceMessages;
         
         
-        public static int entries_count;
-        public static int last_entry;
-        public static float timer;
-        public static bool rnd;
-        public static Random random;
-        public static bool announcesEnabled;
-        public static string ingameMessagePrefix;
-        public static string commandToReloadMessages;
+        public static int EntriesCount;
+        public static int LastEntry;
+        public static float Timer;
+        public static bool Rnd;
+        public static Random Random;
+        public static bool AnnouncesEnabled;
+        public static string IngameMessagePrefix;
+        public static string CommandToReloadMessages;
         
         
         public override void Load()
         {
-            logger = Log;
-            conf = Config;
-            logger.LogWarning("Hello, world!!!");
-            configEnableDiscordBot = conf.Bind("General", "EnableDiscordBot", true, "Enable discord features");
-            configChannelID = conf.Bind("General", "ChannelID", (ulong)0, "Channel ID for broadcast");
-            configToken = conf.Bind("General", "Token", "YOUR_TOKEN", "Bot Token from https://discord.com/developers/applications");
-            configIngameMessagePrefix = conf.Bind("General", "IngameMessagePrefix", "[DC]", "Prefix for ingame messages from discord");
-            configCommandToReloadMessages = conf.Bind("General", "CommandToReloadMessages", "!rm", "Chat command which allow reload auto messages from config");
-            ingameMessagePrefix = configIngameMessagePrefix.Value;
-            commandToReloadMessages = configCommandToReloadMessages.Value;
+            Logger = Log;
+            Conf = Config;
+            Logger.LogWarning("Hello, world!!!");
+            ConfigEnableDiscordBot = Conf.Bind("General", "EnableDiscordBot", false, "Enable discord features");
+            ConfigChannelID = Conf.Bind("General", "ChannelID", (ulong)0, "Channel ID for broadcast");
+            ConfigToken = Conf.Bind("General", "Token", "YOUR_TOKEN", "Bot Token from https://discord.com/developers/applications");
+            ConfigIngameMessagePrefix = Conf.Bind("General", "IngameMessagePrefix", "[DC]", "Prefix for ingame messages from discord");
+            ConfigCommandToReloadMessages = Conf.Bind("General", "CommandToReloadMessages", "!rm", "Chat command which allow reload auto messages from config");
+            IngameMessagePrefix = ConfigIngameMessagePrefix.Value;
+            CommandToReloadMessages = ConfigCommandToReloadMessages.Value;
             ReloadConf();
             Chat.OnChatMessage += HandleChatMessage;
             ClassInjector.RegisterTypeInIl2Cpp<Announcements>();
             AddComponent<Announcements>();
-            logger.LogWarning("Patching");
-            harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
-            logger.LogWarning("Patching done");
+            Logger.LogWarning("Patching");
+            _harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
+            Logger.LogWarning("Patching done");
         }
         
         public void HandleChatMessage(VChatEvent ev)
         {
             if (!ev.Cancelled)
             {
-                if (ev.User.IsAdmin && ev.Message.Equals(commandToReloadMessages))
+                if (ev.User.IsAdmin && ev.Message.Equals(CommandToReloadMessages))
                 {
                     ReloadConf();
                     ev.Cancel();
@@ -98,80 +97,51 @@ namespace servertools
 
         public static void ReloadConf()
         {
-            logger.LogWarning("conf.Reload();");
-            conf.Reload();
-            configMOTD = conf.Bind("Announcements", "MOTD", "Hello here is MOTD", "Set message of the day");
-            configMOTDEnabled = conf.Bind("Announcements", "MOTDEnabled", false, "Show message of the day");
-            configShowUserConnectedInDC = conf.Bind("Announcements", "ShowUserConnectedInDC", false, "Show in discord chat when users connecting");
-            configShowUserConnectedInGameChat = conf.Bind("Announcements", "ShowUserConnectedInGameChat", false, "Show in game chat when users connecting");
-            configShowUserDisConnectedInDC = conf.Bind("Announcements", "ShowUserDisConnectedInDC", false, "Show in discord chat when users disconnecting");
-            configShowUserDisConnectedInGameChat = conf.Bind("Announcements", "ShowUserDisConnectedInGameChat", false, "Show in game chat when users disconnecting");
+            Logger.LogWarning("conf.Reload();");
+            Conf.Reload();
+            _configMotd = Conf.Bind("Announcements", "MOTD", "Hello here is MOTD", "Set message of the day");
+            _configMotdEnabled = Conf.Bind("Announcements", "MOTDEnabled", false, "Show message of the day");
+            _configShowUserConnectedInDc = Conf.Bind("Announcements", "ShowUserConnectedInDC", false, "Show in discord chat when users connecting");
+            _configShowUserConnectedInGameChat = Conf.Bind("Announcements", "ShowUserConnectedInGameChat", false, "Show in game chat when users connecting");
+            _configShowUserDisConnectedInDc = Conf.Bind("Announcements", "ShowUserDisConnectedInDC", false, "Show in discord chat when users disconnecting");
+            _configShowUserDisConnectedInGameChat = Conf.Bind("Announcements", "ShowUserDisConnectedInGameChat", false, "Show in game chat when users disconnecting");
             
-            configAnnounceTimer = conf.Bind("Announcements", "AnnounceTimer", 0f, "Time between messages in seconds");
-            configAnnounceEnabled = conf.Bind("Announcements", "AnnounceEnabled", false, "Enable auto messages system");
-            configAnnounceRandomOrder = conf.Bind("Announcements", "AnnounceRandomOrder", false, "Random order for messages");
-            announce_entries = new List<string>();
-            configAnnounceMessages = new List<ConfigEntry<string>>();
+            ConfigAnnounceTimer = Conf.Bind("Announcements", "AnnounceTimer", 0f, "Time between messages in seconds");
+            _configAnnounceEnabled = Conf.Bind("Announcements", "AnnounceEnabled", false, "Enable auto messages system");
+            ConfigAnnounceRandomOrder = Conf.Bind("Announcements", "AnnounceRandomOrder", false, "Random order for messages");
+            AnnounceEntries = new List<string>();
+            _configAnnounceMessages = new List<ConfigEntry<string>>();
             for (int i = 0; i < 5; i++)
             { 
-                ConfigEntry<string> AnnounceMessage = conf.Bind("Announcements", "AnnounceMessage" + (i+1), "", "Message for announce");
-                configAnnounceMessages.Add(AnnounceMessage);
-                if (AnnounceMessage.Value != "")
+                ConfigEntry<string> announceMessage = Conf.Bind("Announcements", "AnnounceMessage" + (i+1), "", "Message for announce");
+                _configAnnounceMessages.Add(announceMessage);
+                if (announceMessage.Value != "")
                 {
-                    announce_entries.Add(configAnnounceMessages[i].Value);
-                    logger.LogWarning($"Registered message for announce /n{configAnnounceMessages[i].Value}");
+                    AnnounceEntries.Add(_configAnnounceMessages[i].Value);
+                    Logger.LogWarning($"Registered message for announce /n{_configAnnounceMessages[i].Value}");
                 }
             }
-            entries_count = announce_entries.Count;
-            last_entry = 0;
-            timer = configAnnounceTimer.Value;
-            rnd = configAnnounceRandomOrder.Value;
-            random = new Random();
-            announcesEnabled = configAnnounceEnabled.Value;
-            if (Announcements.instance != null)
+            EntriesCount = AnnounceEntries.Count;
+            LastEntry = 0;
+            Timer = ConfigAnnounceTimer.Value;
+            Rnd = ConfigAnnounceRandomOrder.Value;
+            Random = new Random();
+            AnnouncesEnabled = _configAnnounceEnabled.Value;
+            if (Announcements.Instance != null)
             {
-                Announcements.instance.Restart();
+                Announcements.Instance.Restart();
             }
         }
         public override bool Unload()
         {
-            logger.LogWarning("Unpatching");
-            harmony?.UnpatchSelf();
-            Announcements._client.Dispose();
+            Logger.LogWarning("Unpatching");
+            _harmony?.UnpatchSelf();
+            Announcements.Client.Dispose();
             return true;
         }
-        /*
-        [HarmonyPatch(typeof(ChatMessageSystem), "OnUpdate")]
-        public static class ChatMessageSystemOnUpdatePatch {
-            private static void Prefix(ChatMessageSystem __instance)
-            {
-                //var cms = __instance;
-                try {
-                    var entityManager = __instance.EntityManager;
-                    var query = entityManager.CreateEntityQuery(Unity.EntitiesComponentType.ReadOnly<ChatMessageEvent>());
-                    var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
-                    foreach (var entity in entities) {
-                        var msgEvent = entityManager.GetComponentData<ChatMessageEvent>(entity);
-                        var fromCharacter = entityManager.GetComponentData<FromCharacter>(entity);
-                        var user = entityManager.GetComponentData<User>(fromCharacter.User);
-                        if (user.IsAdmin && msgEvent.MessageText.Equals(commandToReloadMessages))
-                        {
-                            ReloadConf();
-                        }
-                        else if (msgEvent.MessageType == ChatMessageType.Global)
-                        {
-                            Announcements.Post($"{user.CharacterName}: {msgEvent.MessageText}").GetAwaiter();
-                        }
-                    }
-                }
-                catch (Exception e) {
-                    logger.LogError(e);
-                }
-            }
-        }
-        */
+        
         [HarmonyPatch(typeof(ServerBootstrapSystem), "OnUserConnected")]
-        public static class OnUserConnected_Patch
+        public static class OnUserConnectedPatch
         {
             private static void Postfix(ServerBootstrapSystem __instance, NetConnectionId netConnectionId)
             {
@@ -184,11 +154,11 @@ namespace servertools
                         var name = user.CharacterName;
                         if (name.IsEmpty) name = "New vampire";
                         if (user.IsAdmin) name = "[Admin] " + name;
-                        if (configShowUserConnectedInDC.Value) Announcements.Post($"**{name} connected**").GetAwaiter();
-                        if (configShowUserConnectedInGameChat.Value)
+                        if (_configShowUserConnectedInDc.Value) Announcements.Post($"**{name} connected**").GetAwaiter();
+                        if (_configShowUserConnectedInGameChat.Value)
                             Announcements.PostInGame(entityManager, $"<b>{name} connected</b>").GetAwaiter();
                             //ServerChatUtils.SendSystemMessageToAllClients(entityManager, $"<b>{name} connected</b>");
-                            if (configMOTDEnabled.Value) Announcements.PostInGameForUser(entityManager, user, configMOTD.Value).GetAwaiter();
+                            if (_configMotdEnabled.Value) Announcements.PostInGameForUser(entityManager, user, _configMotd.Value).GetAwaiter();
                             //ServerChatUtils.SendSystemMessageToClient(entityManager, user, configMOTD.Value);
                     }
                     
@@ -196,7 +166,7 @@ namespace servertools
             }
         }
         [HarmonyPatch(typeof(ServerBootstrapSystem), "OnUserDisconnected")]
-        public static class OnUserDisconnected_Patch
+        public static class OnUserDisconnectedPatch
         {
             private static void Prefix(ServerBootstrapSystem __instance, NetConnectionId netConnectionId, ConnectionStatusChangeReason connectionStatusReason, string extraData)
             {
@@ -212,8 +182,8 @@ namespace servertools
                             var name = user.CharacterName;
                             if (name.IsEmpty) name = "New vampire";
                             if (user.IsAdmin) name = "[Admin] " + name;
-                            if (configShowUserDisConnectedInDC.Value) Announcements.Post($"**{name} disconnected**").GetAwaiter();
-                            if (configShowUserDisConnectedInGameChat.Value)
+                            if (_configShowUserDisConnectedInDc.Value) Announcements.Post($"**{name} disconnected**").GetAwaiter();
+                            if (_configShowUserDisConnectedInGameChat.Value)
                                 Announcements.PostInGame(entityManager, $"<b>{name} disconnected</b>").GetAwaiter();
                             // ServerChatUtils.SendSystemMessageToAllClients(entityManager, $"<b>{name} disconnected</b>");
                         }
@@ -223,12 +193,12 @@ namespace servertools
         }
         private static ServerNetworkLayer _serverNetworkLayer;
         [HarmonyPatch(typeof(ServerNetworkLayer), "Update")]
-        public static class Update_Patch
+        public static class UpdatePatch
         {
             private static void Postfix(ServerNetworkLayer __instance)
             {
                 _serverNetworkLayer = __instance;
-                harmony.Unpatch(typeof(ServerNetworkLayer).GetMethod("Update"),HarmonyPatchType.Postfix);
+                _harmony.Unpatch(typeof(ServerNetworkLayer).GetMethod("Update"),HarmonyPatchType.Postfix);
             }
         }
     }
