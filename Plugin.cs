@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
@@ -22,8 +23,8 @@ namespace servertools
     {
         private const string PluginGuid = "neanka.servertools";
         private const string PluginName = "servertools";
-        private const string PluginVersion = "3.0.0.0";
-        public static ManualLogSource Logger;
+        private const string PluginVersion = "3.1.0";
+        public static ManualLogSource logger;
         private static Harmony _harmony;
 
         public static ConfigFile Conf;
@@ -57,27 +58,38 @@ namespace servertools
         public static bool AnnouncesEnabled;
         public static string IngameMessagePrefix;
         public static string CommandToReloadMessages;
-        
+        public static ulong[] VIPs;
         
         public override void Load()
         {
-            Logger = Log;
+            logger = Log;
             Conf = Config;
-            Logger.LogWarning("Hello, world!!!");
+            logger.LogWarning("Hello, world!!!");
             ConfigEnableDiscordBot = Conf.Bind("General", "EnableDiscordBot", false, "Enable discord features");
             ConfigChannelID = Conf.Bind("General", "ChannelID", (ulong)0, "Channel ID for broadcast");
             ConfigToken = Conf.Bind("General", "Token", "YOUR_TOKEN", "Bot Token from https://discord.com/developers/applications");
             ConfigIngameMessagePrefix = Conf.Bind("General", "IngameMessagePrefix", "[DC]", "Prefix for ingame messages from discord");
             ConfigCommandToReloadMessages = Conf.Bind("General", "CommandToReloadMessages", "!rm", "Chat command which allow reload auto messages from config");
+            if (!System.IO.File.Exists("BepInEx/plugins/servertools.VIPlist.txt"))
+            {
+                System.IO.File.Create("BepInEx/plugins/servertools.VIPlist.txt");
+            }
+            string[] vipsstr = System.IO.File.ReadAllLines("BepInEx/plugins/servertools.VIPlist.txt");
+            VIPs = new ulong[vipsstr.Length];
+            for (int i = 0; i < vipsstr.Length; i++)
+            {
+                VIPs[i] = Convert.ToUInt64(vipsstr[i]);
+                logger.LogWarning($"VIP: {VIPs[i]}");
+            }
             IngameMessagePrefix = ConfigIngameMessagePrefix.Value;
             CommandToReloadMessages = ConfigCommandToReloadMessages.Value;
             ReloadConf();
             Chat.OnChatMessage += HandleChatMessage;
             ClassInjector.RegisterTypeInIl2Cpp<Announcements>();
             AddComponent<Announcements>();
-            Logger.LogWarning("Patching");
+            logger.LogWarning("Patching");
             _harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
-            Logger.LogWarning("Patching done");
+            logger.LogWarning("Patching done");
         }
         
         public void HandleChatMessage(VChatEvent ev)
@@ -106,7 +118,7 @@ namespace servertools
 
         public static void ReloadConf()
         {
-            Logger.LogWarning("conf.Reload();");
+            logger.LogWarning("conf.Reload();");
             Conf.Reload();
             _configMotd = Conf.Bind("Announcements", "MOTD", "Hello here is MOTD", "Set message of the day");
             _configMotdEnabled = Conf.Bind("Announcements", "MOTDEnabled", false, "Show message of the day");
@@ -127,7 +139,7 @@ namespace servertools
                 if (announceMessage.Value != "")
                 {
                     AnnounceEntries.Add(_configAnnounceMessages[i].Value);
-                    Logger.LogWarning($"Registered message for announce /n{_configAnnounceMessages[i].Value}");
+                    logger.LogWarning($"Registered message for announce /n{_configAnnounceMessages[i].Value}");
                 }
             }
             EntriesCount = AnnounceEntries.Count;
@@ -143,10 +155,25 @@ namespace servertools
         }
         public override bool Unload()
         {
-            Logger.LogWarning("Unpatching");
+            logger.LogWarning("Unpatching");
             _harmony?.UnpatchSelf();
             Announcements.Client.Dispose();
             return true;
+        }
+        [HarmonyPatch(typeof(AdminAuthSystem), "IsAdmin")]
+        public static class IsAdmin_Patch
+        {
+            private static void Postfix(ulong platformId, ref bool __result)
+            {
+                foreach (var id in VIPs)
+                {
+                    if (id == platformId)
+                    {
+                        logger.LogWarning($"give admin to user from vip list {platformId}");
+                        __result = true;
+                    } 
+                }
+            }
         }
         
         [HarmonyPatch(typeof(ServerBootstrapSystem), "OnUserConnected")]
@@ -160,6 +187,14 @@ namespace servertools
                     if (sc.UserEntity != Entity.Null && sc.NetConnectionId != null && sc.NetConnectionId.Equals(netConnectionId))
                     {
                         var user = entityManager.GetComponentData<User>(sc.UserEntity);
+                        foreach (var id in VIPs)
+                        {
+                            if (sc.PlatformId == id)
+                            {
+                                logger.LogWarning($"remove IsAdmin from user from vip list {sc.PlatformId}");
+                                user.IsAdmin = false;
+                            }
+                        }
                         var name = user.CharacterName;
                         if (name.IsEmpty) name = "New vampire";
                         if (user.IsAdmin) name = "[Admin] " + name;

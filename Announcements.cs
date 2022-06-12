@@ -17,13 +17,13 @@ namespace servertools
 
     public class Announcements : MonoBehaviour
     {
-        private static ManualLogSource Logger;
+        private static ManualLogSource logger;
         public static Announcements Instance;
         private float _currenttime;
         private void Start()
         {
-            Logger = MainClass.Logger;
-            Logger.LogWarning("Announcements start");
+            logger = MainClass.logger;
+            logger.LogWarning("Announcements start");
             Instance = this;
             _currenttime = 0;
 
@@ -38,7 +38,7 @@ namespace servertools
                 _currenttime += Time.deltaTime;
                 if ( _currenttime >= MainClass.Timer)
                 {
-                    Logger.LogWarning($"posting announcement: {MainClass.AnnounceEntries[MainClass.LastEntry]}");
+                    logger.LogWarning($"posting announcement: {MainClass.AnnounceEntries[MainClass.LastEntry]}");
                     PostInGame(WorldUtility.FindWorld("Server").EntityManager, MainClass.AnnounceEntries[MainClass.LastEntry])
                         .GetAwaiter();
                     if (MainClass.Rnd) MainClass.LastEntry = MainClass.Random.Next(0, MainClass.EntriesCount); else { 
@@ -54,11 +54,11 @@ namespace servertools
         public void Restart()
         {
             _currenttime = MainClass.Timer;
-            MainClass.Logger.LogWarning("Announcements restart");
+            MainClass.logger.LogWarning("Announcements restart");
         }
         public void CoroutineTest()
         {
-            MainClass.Logger.LogWarning( "Start bot corutine" );
+            MainClass.logger.LogWarning( "Start bot corutine" );
             if (MainClass.ConfigEnableDiscordBot.Value)
             {
                 RunBotAsync().GetAwaiter().GetResult();
@@ -84,7 +84,7 @@ namespace servertools
         }
         private Task _client_Log(LogMessage arg)
         {
-            Logger.LogWarning(arg.Message);
+            logger.LogWarning(arg.Message);
             return Task.CompletedTask;
         }
         private Task HandleCommandAsync(SocketMessage arg)
@@ -94,7 +94,7 @@ namespace servertools
                 var message = arg as SocketUserMessage;
                 if (message.Author.IsBot || message.Channel.Id != MainClass.ConfigChannelID.Value)
                     return Task.CompletedTask;
-                Logger.LogWarning($"message received from discord: {message.Author.Username}: {message.Content}");
+                logger.LogWarning($"message received from discord: {message.Author.Username}: {message.Content}");
                 var entityManager = WorldUtility.FindWorld("Server").EntityManager;
                 //ServerChatUtils.SendSystemMessageToAllClients(entityManager, $"[DC] {message.Author.Username}: {message.Content}");
                 PostInGame(entityManager,
@@ -102,7 +102,7 @@ namespace servertools
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                logger.LogError(e);
             }
             return Task.CompletedTask;
         }
@@ -144,7 +144,7 @@ namespace servertools
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                logger.LogError(e);
             }
         }
 
@@ -156,7 +156,7 @@ namespace servertools
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                logger.LogError(e);
             }
             await UniTask.Yield();
         }
@@ -173,7 +173,7 @@ namespace servertools
             catch(HttpException exception)
             {
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-                Logger.LogError(json);
+                logger.LogError(json);
             }
         }
         private async Task SlashCommandHandler(SocketSlashCommand command)
@@ -208,7 +208,7 @@ namespace servertools
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                logger.LogError(e);
                 throw;
             }
         }
