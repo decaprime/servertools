@@ -9,6 +9,7 @@ using ProjectM;
 using ProjectM.Network;
 using Stunlock.Network;
 using UnhollowerRuntimeLib;
+using Unity.Entities;
 using Wetstone.Hooks;
 using Random = System.Random;
 
@@ -90,7 +91,15 @@ namespace servertools
                 }
                 else if (ev.Type == ChatMessageType.Global)
                 {
-                    Announcements.Post($"{ev.User.CharacterName}: {ev.Message}").GetAwaiter();
+                    if (ev.User.IsAdmin)
+                    {
+                        Announcements.Post($"[Admin]{ev.User.CharacterName}: {ev.Message}").GetAwaiter();
+                    }
+                    else
+                    {
+                        Announcements.Post($"{ev.User.CharacterName}: {ev.Message}").GetAwaiter();
+                    }
+                    
                 }
             }
         }
@@ -148,7 +157,7 @@ namespace servertools
                 var entityManager = __instance.EntityManager;
                 foreach (var sc in __instance._ApprovedUsersLookup)
                 {
-                    if (sc.UserEntity != null && sc.NetConnectionId != null && sc.NetConnectionId.Equals(netConnectionId))
+                    if (sc.UserEntity != Entity.Null && sc.NetConnectionId != null && sc.NetConnectionId.Equals(netConnectionId))
                     {
                         var user = entityManager.GetComponentData<User>(sc.UserEntity);
                         var name = user.CharacterName;
@@ -175,7 +184,7 @@ namespace servertools
                     var entityManager = __instance.EntityManager;
                     foreach (var sc in __instance._ApprovedUsersLookup)
                     {
-                        if (sc.UserEntity != null && sc.NetConnectionId != null &&
+                        if (sc.UserEntity != Entity.Null && sc.NetConnectionId != null &&
                             sc.NetConnectionId.Equals(netConnectionId))
                         {
                             var user = entityManager.GetComponentData<User>(sc.UserEntity);

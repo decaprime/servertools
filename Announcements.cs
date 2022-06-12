@@ -115,7 +115,7 @@ namespace servertools
                 var bs = WorldUtility.FindWorld("Server").GetExistingSystem<ServerBootstrapSystem>();
                 foreach (var sc in bs._ApprovedUsersLookup)
                 {
-                    if (sc.UserEntity != null && sc.NetConnectionId != null)
+                    if (sc.UserEntity != Entity.Null && sc.NetConnectionId != null)
                     {
                         var user = entityManager.GetComponentData<User>(sc.UserEntity);
                         if (_serverNetworkLayer._ConnectionIdToUserState[sc.NetConnectionId].ConnectState == ServerNetworkLayer.UserConnectState.Connected)
